@@ -1,0 +1,15 @@
+.my-dom{
+  &__title{
+    font-size:10vw;
+    line-height:200%;
+    text-align:center;
+    background:rgba(255,0,0,0.5);
+  }
+  &__text{
+    font-size:5vw;
+    line-height:150%;
+    &--marker{
+      background:linear-gradient(transparent 60%, #ff6 60%);
+    }
+  }
+}

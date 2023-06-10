@@ -1,0 +1,21 @@
+{
+  "name": "vite-threejs-view-point-moving",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/three": "^0.152.1",
+    "typescript": "^5.0.2",
+    "vite": "^4.3.9"
+  },
+  "dependencies": {
+    "eventemitter3": "^5.0.1",
+    "sass": "^1.63.3",
+    "three": "^0.153.0"
+  }
+}
