@@ -2,3 +2,13 @@
 
 @use "my-block.scss";
 @use "my-dom.scss";
+
+
+.dummy-for-size{
+  position:fixed;
+  opacity:0;
+  pointer-events: none;
+  height:100vh;
+  height:100lvh;
+  width:100%;
+}

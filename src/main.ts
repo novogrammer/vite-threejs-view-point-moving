@@ -24,13 +24,19 @@ interface AppParams{
   emitter:EventEmitter;
   viewFront:HTMLCanvasElement;
   viewBack:HTMLCanvasElement;
+  elementForSize:HTMLElement;
 }
 
+interface Size{
+  width:number;
+  height:number;
+}
 
 class App{
   emitter:EventEmitter;
   viewFront:HTMLCanvasElement;
   viewBack:HTMLCanvasElement;
+  elementForSize:HTMLElement;
   threeEssentialObjects?:{
     rendererFront:THREE.WebGLRenderer,
     rendererBack:THREE.WebGLRenderer,
@@ -43,10 +49,11 @@ class App{
     buildings:THREE.Mesh[],
 
   };
-  constructor({emitter,viewFront,viewBack}:AppParams){
+  constructor({emitter,viewFront,viewBack,elementForSize}:AppParams){
     this.emitter=emitter;
     this.viewFront=viewFront;
     this.viewBack=viewBack;
+    this.elementForSize=elementForSize;
     this.setupThree();
     this.setupScene();
     this.setupEvents();
@@ -62,7 +69,8 @@ class App{
       alpha:true,
     });
     const scene=new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera( FOVY, window.innerWidth / window.innerHeight, 0.1, FAR );
+    const size=this.getSize();
+    const camera = new THREE.PerspectiveCamera( FOVY, size.width / size.height, 0.1, FAR );
     camera.position.z=5;
     
     const ambientLight=new THREE.AmbientLight(0x404040);
@@ -134,16 +142,39 @@ class App{
     };
     
   }
+  getSize():Size{
+    // const width=window.innerWidth;
+    // const height=window.innerHeight;
+    const width=this.elementForSize.clientWidth;
+    const height=this.elementForSize.clientHeight;
+
+    return {
+      width,
+      height,
+    }
+  }
   setupEvents(){
-    window.addEventListener("resize",()=>{
-      this.onResize();
-    });
-    this.onResize();
+    // window.addEventListener("resize",()=>{
+    //   this.onResize();
+    // });
+    // this.onResize();
+
+    let previousWidth:number|null=null;
+    let previousHeight:number|null=null;
     
     let previousTimeMS=performance.now();
     const animate=(timeMS:number)=>{
       requestAnimationFrame(animate);
+      const size=this.getSize();
+      if(size.width!=previousWidth || size.height!=previousHeight){
+        previousWidth=size.width;
+        previousHeight=size.height;
+        this.onResize();
+      }
+      // console.log(size.width,size.height);
       const deltaTimeMS=timeMS-previousTimeMS;
+
+
       this.onTick(timeMS/1000,deltaTimeMS/1000);
       previousTimeMS=timeMS;
     };
@@ -155,12 +186,12 @@ class App{
       throw new Error("this.threeEssentialObjects is null");
     }
     const {rendererFront,rendererBack,camera}=this.threeEssentialObjects;
-    const width=window.innerWidth;
-    const height=window.innerHeight;
+    const {width,height}=this.getSize();
     rendererFront.setSize(width,height);
     rendererBack.setSize(width,height);
     const aspect=width/height;
     camera.aspect=aspect;
+    camera.updateProjectionMatrix();
     
   }
   onTick(time:number,deltaTime:number){
@@ -174,7 +205,8 @@ class App{
       throw new Error("this.threeAdditionalObjects is null");
     }
     const{objects,buildings}=this.threeAdditionalObjects;
-    const widthPx=window.innerWidth;
+    const size=this.getSize();
+    const widthPx=size.width;
     const width=widthPx*PX_TO_M;
     for(let object of objects){
       object.rotation.x+=deltaTime*0.3;
@@ -184,7 +216,7 @@ class App{
         object.position.x=width*0.5;
       }
     }
-    // const heightPx=window.innerHeight;
+    // const heightPx=size.height;
     // const height=heightPx*PX_TO_M;
     const documentHeightPx=document.body.clientHeight;
     const documentHeight=documentHeightPx*PX_TO_M;
@@ -202,7 +234,8 @@ class App{
     }
     const {rendererFront,rendererBack,scene,camera}=this.threeEssentialObjects;
     const {ground}=this.threeAdditionalObjects;
-    const heightPx=window.innerHeight;
+    const size=this.getSize();
+    const heightPx=size.height;
     const height=heightPx*PX_TO_M;
     const cameraZ=getCameraZ(height,FOVY);
     camera.position.z=cameraZ;
@@ -227,7 +260,8 @@ window.addEventListener("load",()=>{
   const emitter=new EventEmitter();
   const viewFront=document.querySelector<HTMLCanvasElement>(".my-block__canvas--front")!;
   const viewBack=document.querySelector<HTMLCanvasElement>(".my-block__canvas--back")!;
-  (window as any).app=new App({emitter,viewFront,viewBack});
+  const elementForSize=document.querySelector<HTMLElement>(".dummy-for-size")!;
+  (window as any).app=new App({emitter,viewFront,viewBack,elementForSize});
 });
 
 
