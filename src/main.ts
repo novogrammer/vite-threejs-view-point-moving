@@ -184,8 +184,8 @@ class App{
         object.position.x=width*0.5;
       }
     }
-    const heightPx=window.innerHeight;
-    const height=heightPx*PX_TO_M;
+    // const heightPx=window.innerHeight;
+    // const height=heightPx*PX_TO_M;
     const documentHeightPx=document.body.clientHeight;
     const documentHeight=documentHeightPx*PX_TO_M;
     for(let building of buildings){
