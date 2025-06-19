@@ -6,6 +6,8 @@ const PX_TO_M=1/100;
 const FOVY=45;
 const FAR=1000;
 
+const TRANSITION_DURATION=0.5;
+
 function getCameraZ(height:number,fovyDeg:number):number{
   const fovy=THREE.MathUtils.degToRad(fovyDeg);
   const halfFovy=fovy/2;
@@ -23,6 +25,7 @@ interface AppParams{
   viewFront:HTMLCanvasElement;
   viewBack:HTMLCanvasElement;
   elementForSize:HTMLElement;
+  title:HTMLElement;
 }
 
 interface Size{
@@ -34,6 +37,7 @@ class App{
   viewFront:HTMLCanvasElement;
   viewBack:HTMLCanvasElement;
   elementForSize:HTMLElement;
+  title:HTMLElement;
   threeEssentialObjects?:{
     rendererFront:THREE.WebGLRenderer,
     rendererBack:THREE.WebGLRenderer,
@@ -44,12 +48,14 @@ class App{
     objects:THREE.Object3D[];
     ground:THREE.Mesh,
     buildings:THREE.Mesh[],
+    uza:THREE.Object3D;
 
   };
-  constructor({viewFront,viewBack,elementForSize}:AppParams){
+  constructor({viewFront,viewBack,elementForSize,title}:AppParams){
     this.viewFront=viewFront;
     this.viewBack=viewBack;
     this.elementForSize=elementForSize;
+    this.title=title;
     this.setupThree();
     this.setupScene();
     this.setupEvents();
@@ -130,11 +136,22 @@ class App{
         buildings.push(building);
       }
     }
+
+    let uza:THREE.Mesh;
+    {
+      const geometry = new THREE.ConeGeometry( 1, 2, 32 ); 
+      const material = new THREE.MeshStandardMaterial( {color: 0xffff00} );
+      uza = new THREE.Mesh(geometry, material );
+      uza.userData.uzaRatio=0;
+      scene.add( uza );
+    }
+
     
     this.threeAdditionalObjects={
       objects,
       ground,
       buildings,
+      uza,
     };
     
   }
@@ -148,6 +165,16 @@ class App{
       width,
       height,
     }
+  }
+  getTitleSize():Size{
+    const width=this.title.clientWidth;
+    const height=this.title.clientHeight;
+
+    return {
+      width,
+      height,
+    }
+
   }
   setupEvents(){
     // window.addEventListener("resize",()=>{
@@ -200,7 +227,7 @@ class App{
     if(!this.threeAdditionalObjects){
       throw new Error("this.threeAdditionalObjects is null");
     }
-    const{objects,buildings}=this.threeAdditionalObjects;
+    const{objects,buildings,uza}=this.threeAdditionalObjects;
     const size=this.getSize();
     const widthPx=size.width;
     const width=widthPx*PX_TO_M;
@@ -220,6 +247,17 @@ class App{
       const {ix,iz}=building.userData;
       building.scale.y=getBuildingHeight(ix,iz,documentHeight,time);
     }
+
+    const titleSize=this.getTitleSize();
+    // console.log(titleSize.height,window.scrollY);
+    if(window.scrollY <= titleSize.height){
+      uza.userData.uzaRatio = Math.max(0,uza.userData.uzaRatio - deltaTime/TRANSITION_DURATION);
+    }else{
+      uza.userData.uzaRatio = Math.min(1,uza.userData.uzaRatio + deltaTime/TRANSITION_DURATION);
+    }
+    uza.rotation.x+=deltaTime*1;
+    // console.log(uza.userData.uzaRatio);
+
   }
   render(){
     if(!this.threeEssentialObjects){
@@ -229,7 +267,7 @@ class App{
       throw new Error("this.threeAdditionalObjects is null");
     }
     const {rendererFront,rendererBack,scene,camera}=this.threeEssentialObjects;
-    const {ground}=this.threeAdditionalObjects;
+    const {ground,uza}=this.threeAdditionalObjects;
     const size=this.getSize();
     const heightPx=size.height;
     const height=heightPx*PX_TO_M;
@@ -240,6 +278,17 @@ class App{
     const documentHeightPx=document.body.clientHeight;
     const documentHeight=documentHeightPx*PX_TO_M;
     ground.position.y=(documentHeight+height*-0.5)*-1;
+
+    {
+      const normalPosition = new THREE.Vector3(0,0,-10);
+      const uzaPosition = new THREE.Vector3(size.width * 0.3 * PX_TO_M,(window.scrollY + size.height*0.3)*-1*PX_TO_M,0);
+      const uzaRatio=uza.userData.uzaRatio as number;
+
+      const p=normalPosition.clone().lerp(uzaPosition,uzaRatio);
+
+      uza.position.copy(p);
+
+    }
     
     //render foreground
     camera.far=cameraZ;
@@ -256,7 +305,8 @@ window.addEventListener("load",()=>{
   const viewFront=document.querySelector<HTMLCanvasElement>(".my-block__canvas--front")!;
   const viewBack=document.querySelector<HTMLCanvasElement>(".my-block__canvas--back")!;
   const elementForSize=document.querySelector<HTMLElement>(".dummy-for-size")!;
-  (window as any).app=new App({viewFront,viewBack,elementForSize});
+  const title=document.querySelector<HTMLElement>(".my-dom__title")!;
+  (window as any).app=new App({viewFront,viewBack,elementForSize,title});
 });
 
 
