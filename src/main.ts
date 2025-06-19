@@ -1,7 +1,6 @@
 import './style.scss'
 
 import * as THREE from "three";
-import EventEmitter from "eventemitter3";
 
 const PX_TO_M=1/100;
 const FOVY=45;
@@ -21,7 +20,6 @@ function getBuildingHeight(ix:number,iz:number,heightMax:number,time:number){
 }
 
 interface AppParams{
-  emitter:EventEmitter;
   viewFront:HTMLCanvasElement;
   viewBack:HTMLCanvasElement;
   elementForSize:HTMLElement;
@@ -33,7 +31,6 @@ interface Size{
 }
 
 class App{
-  emitter:EventEmitter;
   viewFront:HTMLCanvasElement;
   viewBack:HTMLCanvasElement;
   elementForSize:HTMLElement;
@@ -49,8 +46,7 @@ class App{
     buildings:THREE.Mesh[],
 
   };
-  constructor({emitter,viewFront,viewBack,elementForSize}:AppParams){
-    this.emitter=emitter;
+  constructor({viewFront,viewBack,elementForSize}:AppParams){
     this.viewFront=viewFront;
     this.viewBack=viewBack;
     this.elementForSize=elementForSize;
@@ -257,11 +253,10 @@ class App{
 }
 
 window.addEventListener("load",()=>{
-  const emitter=new EventEmitter();
   const viewFront=document.querySelector<HTMLCanvasElement>(".my-block__canvas--front")!;
   const viewBack=document.querySelector<HTMLCanvasElement>(".my-block__canvas--back")!;
   const elementForSize=document.querySelector<HTMLElement>(".dummy-for-size")!;
-  (window as any).app=new App({emitter,viewFront,viewBack,elementForSize});
+  (window as any).app=new App({viewFront,viewBack,elementForSize});
 });
 
 
